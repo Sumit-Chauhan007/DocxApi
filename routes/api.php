@@ -26,6 +26,6 @@ Route::group([
 
 ], function ($router) {
     Route::post('/ask-upload-document',[DocxController::class, 'AskAndUpload']);
-    Route::post('/ask-question',[DocxController::class, 'ask']);
+   
     Route::post('/delete-doc',[DocxController::class, 'delete']);
 });
