@@ -16,5 +16,4 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/',[DocxController::class, 'index']);
 Route::post('/ask-upload-document',[DocxController::class, 'AskAndUpload']);
-Route::post('/ask-question',[DocxController::class, 'ask']);
 Route::post('/delete-doc',[DocxController::class, 'delete']);

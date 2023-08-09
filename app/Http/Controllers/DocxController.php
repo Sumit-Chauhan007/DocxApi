@@ -21,7 +21,7 @@ class DocxController extends Controller
         // $filesize = $file->getSize();
         if ($file != '') {
             $apiKey = env('ASK_MY_PDF_API');
-            
+
             $apiUrl = 'https://api.askyourpdf.com/v1/api/upload';
             $filename = $_FILES['document']['name'];
             $filedata = $_FILES['document']['tmp_name'];
@@ -53,44 +53,44 @@ class DocxController extends Controller
             }
             $data = Docx::where('document_Id', $response->docId)->first();
             if ($data) {
-                return response()->json(['error'=>'Already Added with document Id::'.$response->docId.'']);
-            } 
+                return response()->json(['error' => 'Already Added with document Id::' . $response->docId . '']);
+            }
             $data = new Docx();
             $data->uuid = Str::uuid();
             $data->document_Id = $response->docId;
             $data->save();
-            $id = $response->docId;    
+            $id = $response->docId;
             $openaiApiKey = env('OPEN_AI_API_KEY');
-   
+
             $headers = [
                 'Content-Type: application/json',
                 'x-api-key: ' . $apiKey,
             ];
-            
+
             $data = [
                 [
                     "sender" => "User",
                     "message" => "Read this PDF and tell me what are my possible Tax Deductions.If there is no specific information regarding tax deductions then send me nothing and dont write 'in json format' in the response",
                 ],
             ];
-          
+
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, "https://api.askyourpdf.com/v1/chat/{$id}");
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-            
+
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            
+
             curl_close($ch);
-            
+
             if ($httpCode === 200) {
-              
+
                 $responseData = json_decode($response, true);
                 $answerMessage = $responseData['answer']['message'];
-               
+
                 if (preg_match('/\d+/', $answerMessage)) {
                     $response = Http::withHeaders([
                         'Content-Type' => 'application/json',
@@ -104,16 +104,15 @@ class DocxController extends Controller
                             ],
                         ],
                     ]);
-                               
-                $ChatGptAnswer = $response->json();
-                // dd($ChatGptAnswer);
-                $ChatresponseData = $ChatGptAnswer['choices'][0]['message']['content'];
-                
-                return response()->json([
-                    'message' =>$ChatresponseData
-                ]);
-            } else{
-                return response()->json([], 204);
+
+                    $ChatGptAnswer = $response->json();
+                    // dd($ChatGptAnswer);
+                    $ChatresponseData = $ChatGptAnswer['choices'][0]['message']['content'];
+                    return response()->json([
+                        'message' => $ChatresponseData
+                    ]);
+                } else {
+                    return response()->json([], 204);
                 }
             } else {
                 $errorStatus = $httpCode;
@@ -125,24 +124,24 @@ class DocxController extends Controller
         }
     }
 
-    function delete( Request $request){     
+    function delete(Request $request)
+    {
         $id = $request->id;
+        $apiKey = env('ASK_MY_PDF_API');
         $headers = [
-            'Content-Type' => 'application/json',
-            'x-api-key' => 'ask_8c964629d30d547449f7f95ad383f415',
+            'x-api-key: ' . $apiKey,
         ];
         
-        $data = [
-            [
-                "sender" => "User",
-                "message" => "Read this PDF and tell me what are my possible Tax Deductions.",
-            ],
-        ];
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'https://api.askyourpdf.com/v1/api/documents/' . $id);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         
-        $response = Http::withHeaders($headers)->delete("https://api.askyourpdf.com/v1/api/documents/{$id}", $data);
-        
-        if ($response->status() === 200) {
-            Docx::where('document_Id',$id)->delete();
+        $response = curl_exec($ch);
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($status === 200) {
+            Docx::where('document_Id', $id)->delete();
             $docx = Docx::get();
             $id = 0;
             $html = '';
@@ -151,16 +150,16 @@ class DocxController extends Controller
             <td>' . $id . '</td>
             <td>' . $doc->document_Id . '</td>
             <td>' . $doc->created_at . '</td>
-            <td><button onclick=ask("'. $doc->document_Id .'") class="btn btn-primary">Get Detail</button></td>
-            <td><button onclick=delet("'. $doc->document_Id .'") class="btn btn-primary">Delete</button></td>
+            <td><button onclick=ask("' . $doc->document_Id . '") class="btn btn-primary">Get Detail</button></td>
+            <td><button onclick=delet("' . $doc->document_Id . '") class="btn btn-primary">Delete</button></td>
             </tr>';
                 $id++;
             }
             return response()->json(['html' => $html]);
-          
         } else {
-            $errorStatus = $response->status();
+            $errorStatus = $status;
             return response()->json(['error' => 'Error: ' . $errorStatus]);
         }
+        curl_close($ch);
     }
 }

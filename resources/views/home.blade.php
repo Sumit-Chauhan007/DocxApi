@@ -105,7 +105,6 @@
                             <th scope="col">#</th>
                             <th scope="col">Document Id</th>
                             <th scope="col">Document Id Creation Date</th>
-                            <th scope="col">Get Document Detail</th>
                             <th scope="col">Delete Document</th>
                         </tr>
                     </thead>
@@ -115,8 +114,6 @@
                                 <td>{{ $id }}</td>
                                 <td>{{ $doc->document_Id }}</td>
                                 <td>{{ $doc->created_at }}</td>
-                                <td><button onclick="ask('{{ $doc->document_Id }}')" class="btn btn-primary">Get
-                                        Detail</button></td>
                                 <td><button onclick="delet('{{ $doc->document_Id }}')"
                                         class="btn btn-primary">Delete</button></td>
                             </tr>
@@ -140,27 +137,6 @@
         integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous">
     </script>
     <script>
-        function ask($id) {
-            var formData = new FormData();
-            formData.append('id', $id);
-            $('.ed_loader').addClass('edify_loader');
-            $.ajax({
-                type: "post",
-                url: "{{ url('/ask-question') }}",
-                contentType: 'multipart/form-data',
-                cache: false,
-                contentType: false,
-                processData: false,
-                data: formData,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    $('.ed_loader').removeClass('edify_loader');
-                    $('.answer').html(response.message);
-                }
-            });
-        }
 
         function delet($id) {
             var formData = new FormData();
